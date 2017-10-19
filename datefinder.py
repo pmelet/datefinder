@@ -70,7 +70,7 @@ class DateFinder(object):
             {time}
             |
             ## Grab any digits
-            (?P<digits_modifier>{digits_modifier})
+            (?P<digits_modifiers>{digits_modifiers})
             |
             (?P<digits>{digits})
             |
@@ -95,7 +95,7 @@ class DateFinder(object):
     DATES_PATTERN = DATES_PATTERN.format(
         time=TIME_PATTERN,
         digits=DIGITS_PATTERN,
-        digits_modifier=DIGITS_MODIFIER_PATTERN,
+        digits_modifiers=DIGITS_MODIFIER_PATTERN,
         days=DAYS_PATTERN,
         months=MONTHS_PATTERN,
         delimiters=DELIMITERS_PATTERN,
@@ -204,7 +204,9 @@ class DateFinder(object):
         try:
             #as_dt = parser.parse(date_string, default=self.base_date)
             as_dt = dateparser.parse(date_string)
+            #print date_string, as_dt
         except ValueError:
+            #print date_string, "not well formatted"
             # replace tokens that are problematic for dateutil
             date_string, tz_string = self._find_and_replace(date_string, captures)
 
@@ -250,13 +252,15 @@ class DateFinder(object):
             time_periods = captures.get('time_periods')
             extra_tokens = captures.get('extra_tokens')
 
+            #print captures
+
             if strict:
                 complete = False
                 ## 12-05-2015
                 if len(digits) == 3:
                     complete = True
                 ## 19 February 2013 year 09:10
-                elif (len(months) == 1) and (len(digits) == 2):
+                elif (len(months) == 1) and (len(digits) + len(digits_modifiers) == 2):
                     complete = True
 
                 if not complete:
@@ -267,7 +271,7 @@ class DateFinder(object):
                 if len(digits) >= 2:
                     complete = True
                 ## 19 February, February 2013 year 09:10
-                elif (len(months) == 1) and (len(digits) >= 1 ):
+                elif (len(months) == 1) and (len(digits) + len(digits_modifiers) >= 1):
                     complete = True
 
                 if not complete:
