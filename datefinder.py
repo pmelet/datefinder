@@ -2,6 +2,7 @@ import copy
 import logging
 import regex as re
 from dateutil import tz, parser
+import dateparser 
 
 
 logger = logging.getLogger('datefinder')
@@ -23,7 +24,7 @@ class DateFinder(object):
     DELIMITERS_PATTERN = '[/\:\-\,\s\_\+\@]+'
     TIME_PERIOD_PATTERN = 'a\.m\.|am|p\.m\.|pm'
     ## can be in date strings but not recognized by dateutils
-    EXTRA_TOKENS_PATTERN = 'due|by|on|standard|daylight|savings|time|date|of|to|until|z|at|t'
+    EXTRA_TOKENS_PATTERN = 'due|by|on|standard|daylight|savings|time|date|of|to|until|z|at|t|the'
 
     ## TODO: Get english numbers?
     ## http://www.rexegg.com/regex-trick-numbers-in-english.html
@@ -89,6 +90,7 @@ class DateFinder(object):
         ){{3,}}
     )
     """
+
 
     DATES_PATTERN = DATES_PATTERN.format(
         time=TIME_PATTERN,
@@ -200,7 +202,8 @@ class DateFinder(object):
         # For well formatted string, we can already let dateutils parse them
         # otherwise self._find_and_replace method might corrupt them
         try:
-            as_dt = parser.parse(date_string, default=self.base_date)
+            #as_dt = parser.parse(date_string, default=self.base_date)
+            as_dt = dateparser.parse(date_string)
         except ValueError:
             # replace tokens that are problematic for dateutil
             date_string, tz_string = self._find_and_replace(date_string, captures)
@@ -236,6 +239,7 @@ class DateFinder(object):
 
             ## Get individual group matches
             captures = match.capturesdict()
+
             time = captures.get('time')
             digits = captures.get('digits')
             digits_modifiers = captures.get('digits_modifiers')
@@ -257,6 +261,18 @@ class DateFinder(object):
 
                 if not complete:
                     continue
+            else:
+                complete = False
+                ## 05-2015, 12-05
+                if len(digits) >= 2:
+                    complete = True
+                ## 19 February, February 2013 year 09:10
+                elif (len(months) == 1) and (len(digits) >= 1 ):
+                    complete = True
+
+                if not complete:
+                    continue
+
 
             ## sanitize date string
             ## replace unhelpful whitespace characters with single whitespace
