@@ -203,7 +203,7 @@ class DateFinder(object):
         # otherwise self._find_and_replace method might corrupt them
         try:
             #as_dt = parser.parse(date_string, default=self.base_date)
-            as_dt = dateparser.parse(date_string)
+            as_dt = dateparser.parse(date_string, settings={'PREFER_DATES_FROM': 'future'})
             #print date_string, as_dt
         except ValueError:
             #print date_string, "not well formatted"
